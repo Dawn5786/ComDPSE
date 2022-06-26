@@ -36,12 +36,12 @@ def run(settings):
     # settings.print_stats = ['Loss/total', 'Loss/iou', 'ClfTrain/init_loss', 'ClfTrain/test_loss']
 
     # Train datasets
-    # lasot_train = Lasot(settings.env.lasot_dir, split='train')
-    # got10k_train = Got10k(settings.env.got10k_dir, split='vottrain')
-    got10k_train = Got10k(settings.env.got10k_dir)
-    #yaogan_train = YaoganCutDataset(settings.env.yaogancut_dir, image_loader=opencv_loader, split='train')
+    lasot_train = Lasot(settings.env.lasot_dir, split='train')
+    got10k_train = Got10k(settings.env.got10k_dir, split='vottrain')
+    # got10k_train = Got10k(settings.env.got10k_dir)
+    yaogan_train = YaoganCutDataset(settings.env.yaogancut_dir, image_loader=opencv_loader, split='train')
 
-    # trackingnet_train = TrackingNet(settings.env.trackingnet_dir, set_ids=list(range(4)))
+    trackingnet_train = TrackingNet(settings.env.trackingnet_dir, set_ids=list(range(4)))
     # coco_train = MSCOCOSeq(settings.env.coco_dir)
 
     # Validation datasets
@@ -72,8 +72,6 @@ def run(settings):
     label_params = {'feature_sz': settings.feature_sz, 'sigma_factor': output_sigma, 'kernel_sz': settings.target_filter_sz}
     label_density_params = {'feature_sz': settings.feature_sz, 'sigma_factor': output_sigma, 'kernel_sz': settings.target_filter_sz}
 
-    # data_processing_train = processing.KLDiMPProcessing(search_area_factor=settings.search_area_factor,
-    # data_processing_train = processing.KLDiMPProcessingWithPos(search_area_factor=settings.search_area_factor,
     data_processing_train = processing.KLDiMPProcessingWithRelativePos(search_area_factor=settings.search_area_factor,
                                                         output_sz=settings.output_sz,
                                                         center_jitter_factor=settings.center_jitter_factor,
@@ -88,8 +86,6 @@ def run(settings):
                                                         matrix_transform=transform_pos_matrix,
                                                         joint_transform=transform_joint)
 
-    # data_processing_val = processing.KLDiMPProcessing(search_area_factor=settings.search_area_factor,
-    # data_processing_val = processing.KLDiMPProcessingWithPos(search_area_factor=settings.search_area_factor,
     data_processing_val = processing.KLDiMPProcessingWithRelativePos(search_area_factor=settings.search_area_factor,
                                                       output_sz=settings.output_sz,
                                                       center_jitter_factor=settings.center_jitter_factor,
@@ -105,15 +101,13 @@ def run(settings):
                                                       joint_transform=transform_joint)
 
     # Train sampler and loader
-    # dataset_train = sampler.DiMPSampler([lasot_train, got10k_train, trackingnet_train, coco_train], [1,1,1,1],
-    #                                     samples_per_epoch=50000, max_gap=500, num_test_frames=3, num_train_frames=3,
-    #                                     processing=data_processing_train)
+    dataset_train = sampler.DiMPSampler([lasot_train, got10k_train, trackingnet_train, coco_train], [1,1,1,1],
+                                        samples_per_epoch=50000, max_gap=500, num_test_frames=3, num_train_frames=3,
+                                        processing=data_processing_train)
     # dataset_train = sampler.DiMPSampler([got10k_train], [1],
     #                                     samples_per_epoch=50000, max_gap=500, num_test_frames=3, num_train_frames=3,
     #                                     processing=data_processing_train)
-    dataset_train = sampler.DiMPSampler([got10k_train], [1],
-                                        samples_per_epoch=50000, max_gap=500, num_test_frames=2, num_train_frames=2,
-                                        processing=data_processing_train)
+
 
     loader_train = LTRLoader('train', dataset_train, training=True, batch_size=settings.batch_size, num_workers=settings.num_workers,
                              shuffle=True, drop_last=True, stack_dim=1)
@@ -132,31 +126,7 @@ def run(settings):
     loader_val = LTRLoader('val', dataset_val, training=False, batch_size=settings.batch_size, num_workers=settings.num_workers,
                            shuffle=False, drop_last=True, epoch_interval=5, stack_dim=1)
 
-    # Create network and actor
-    # net = dimpnet.dimpnet50(filter_size=settings.target_filter_sz, backbone_pretrained=True, optim_iter=5,
-    #                         clf_feat_norm=True, clf_feat_blocks=0, final_conv=True, out_feature_dim=512,
-    #                         optim_init_step=0.9, optim_init_reg=0.1,
-    #                         init_gauss_sigma=output_sigma * settings.feature_sz, num_dist_bins=100,
-    #                         bin_displacement=0.1, mask_init_factor=3.0, target_mask_act='sigmoid', score_act='relu',
-    #                         frozen_backbone_layers=['conv1', 'bn1', 'layer1', 'layer2'])
-    # net = dimpnet.dimpnet50_com_abspos(filter_size=settings.target_filter_sz, backbone_pretrained=True, optim_iter=5,
-    #                         clf_feat_norm=True, clf_feat_blocks=0, final_conv=True, out_feature_dim=512,
-    #                         optim_init_step=0.9, optim_init_reg=0.1,
-    #                         init_gauss_sigma=output_sigma * settings.feature_sz, num_dist_bins=100,
-    #                         bin_displacement=0.1, mask_init_factor=3.0, target_mask_act='sigmoid', score_act='relu',
-    #                         frozen_backbone_layers=['conv1', 'bn1', 'layer1', 'layer2'])
-    # net = abspos_dimpnet.dimpnet50_com_abspos(filter_size=settings.target_filter_sz, backbone_pretrained=True, optim_iter=5,
-    #                         clf_feat_norm=True, clf_feat_blocks=0, final_conv=True, out_feature_dim=512,
-    #                         optim_init_step=0.9, optim_init_reg=0.1,
-    #                         init_gauss_sigma=output_sigma * settings.feature_sz, num_dist_bins=100,
-    #                         bin_displacement=0.1, mask_init_factor=3.0, target_mask_act='sigmoid', score_act='relu',
-    #                         frozen_backbone_layers=['conv1', 'bn1', 'layer1', 'layer2'])
-    # net = relativepos_dimpnet.dimpnet50_com_relativepos(filter_size=settings.target_filter_sz, backbone_pretrained=True, optim_iter=5,
-    #                         clf_feat_norm=True, clf_feat_blocks=0, final_conv=True, out_feature_dim=512,
-    #                         optim_init_step=0.9, optim_init_reg=0.1,
-    #                         init_gauss_sigma=output_sigma * settings.feature_sz, num_dist_bins=100,
-    #                         bin_displacement=0.1, mask_init_factor=3.0, target_mask_act='sigmoid', score_act='relu',
-    #                         frozen_backbone_layers=['conv1', 'bn1', 'layer1', 'layer2'])
+    
     net = relativepos_dimpnet.dimpnet50_com_relativepos(filter_size=settings.target_filter_sz, backbone_pretrained=True, optim_iter=5,
                             clf_feat_norm=True, clf_feat_blocks=0, final_conv=True, out_feature_dim=64,
                             optim_init_step=0.9, optim_init_reg=0.1,
@@ -172,8 +142,6 @@ def run(settings):
 
     loss_weight = {'bb_ce': 0.01, 'test_clf': 100, 'test_init_clf': 100, 'test_iter_clf': 400}
 
-    # actor = tracking_actors.KLDiMPActor(net=net, objective=objective, loss_weight=loss_weight)
-    # actor = abstrack_actors.AbsDiMPActor(net=net, objective=objective, loss_weight=loss_weight)
     actor = relativetrack_actors.RelativeDiMPActor(net=net, objective=objective, loss_weight=loss_weight)
 
     # Optimizer
