@@ -1,2 +1,2 @@
 # ComDPSE
-Complex-Former with dynamic polar Spatio-temporal encoding
+A Complex-Former Tracker with Dynamic Polar Spatio-temporal Encoding
